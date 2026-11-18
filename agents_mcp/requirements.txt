@@ -1,0 +1,8 @@
+crewai
+crewai-tools
+fastmcp
+sqlalchemy
+python-dotenv
+itsdangerous
+langchain-groq
+openai
