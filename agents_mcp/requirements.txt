@@ -1,5 +1,6 @@
 crewai
 crewai-tools
+crewai[litellm]
 fastmcp
 sqlalchemy
 python-dotenv

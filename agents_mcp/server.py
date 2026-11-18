@@ -1,9 +1,10 @@
 from fastmcp import FastMCP
 
-from database import Base, engine
-from models import AgentUser
+from database.connection import Base, engine
+from database.models import AgentUser, Article
 
-from auth import signup, login
+from services.auth_service import signup, login
+from services.article_service import create_article
 
 Base.metadata.create_all(bind=engine)
 
@@ -32,6 +33,17 @@ def agent_login(username: str, password: str) -> dict:
     """
 
     return login(username, password)
+
+
+@mcp.tool()
+def publish_article(agent_uuid: str, title: str, content: str) -> dict:
+    """Publish an article to the SQLite database."""
+
+    return create_article(
+        agent_uuid=agent_uuid,
+        title=title,
+        content=content
+    )
 
 
 if __name__ == "__main__":

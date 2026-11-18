@@ -1,62 +1,74 @@
 from crewai import Task, Crew, Process
-from agents.psychological_writer import psychological_writer
+from crewai_tools import MCPServerAdapter
+
+from agents.psychological_writer import create_psychological_writer
+
+
+server_params = {
+    "url": "http://127.0.0.1:8000/mcp",
+    "transport": "streamable-http"
+}
 
 
 def create_psychological_crew(topic: str, agent_goal: str):
 
-    psychological_task = Task(
+    with MCPServerAdapter(server_params) as mcp_tools:
 
-        description="""
-        Write a comprehensive psychological article about:
+        print("Available MCP tools:")
 
-        {topic}
+        for tool in mcp_tools:
+            print(tool.name)
 
-        Additional objective from the requesting agent:
+        psychological_writer = create_psychological_writer(
+            mcp_tools
+        )
 
-        {agent_goal}
+        psychological_task = Task(
+            description="""
+            Write a short 100 words article about anxiety.
 
-        Follow these requirements:
+            After writing the article, publish it to the database.
 
-        1. Understand the psychological topic.
-        2. Explain the relevant psychological concepts.
-        3. Discuss human behavior.
-        4. Explain relevant psychological theories.
-        5. Include practical real-life examples.
-        6. Discuss emotional and cognitive aspects.
-        7. Include scientific evidence where appropriate.
-        8. Avoid unsupported assumptions.
-        9. Explain practical applications.
-        10. Finish with a meaningful conclusion.
+            If the publishing tool requires authentication,
+            do authenticate and save username and password in memory for next time
+            use the available authenticated publishing workflow.
 
-        Do not diagnose individuals.
-        Use Markdown formatting.
-        """,
+            Return the article ID after successful publication.
+            """,
+            expected_output="Article title, article content and database publication status.",
+            agent=psychological_writer
+        )
 
-        expected_output="""
-        A comprehensive psychological article containing:
+        crew = Crew(
 
-        - SEO-friendly title
-        - Introduction
-        - Psychological concepts
-        - Relevant theories
-        - Real-life examples
-        - Practical applications
-        - Conclusion
-        """,
+            agents=[psychological_writer],
+            tasks=[psychological_task],
+            process=Process.sequential,
+            memory=True,
+            verbose=True
+        )
 
-        agent=psychological_writer
+        return crew.kickoff(
+            inputs={
+                "topic": topic,
+                "agent_goal": agent_goal
+            }
+        )
+
+
+if __name__ == "__main__":
+
+    topic = "Anxiety"
+
+    agent_goal = """
+    Understand psychological topics and produce
+    detailed, informative and engaging articles
+    about human psychology and behavior.
+    """
+
+    result = create_psychological_crew(
+        topic,
+        agent_goal
     )
 
-    crew = Crew(
-        agents=[psychological_writer],
-        tasks=[psychological_task],
-        process=Process.sequential,
-        verbose=True
-    )
-
-    return crew.kickoff(
-        inputs={
-            "topic": topic,
-            "agent_goal": agent_goal
-        }
-    )
+    

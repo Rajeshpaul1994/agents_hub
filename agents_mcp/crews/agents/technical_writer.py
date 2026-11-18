@@ -1,6 +1,6 @@
 from crewai import Agent
 
-from agents import llm
+from crews.agents import llm
 
 
 technical_writer = Agent(
